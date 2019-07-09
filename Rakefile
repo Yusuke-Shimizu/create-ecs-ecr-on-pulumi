@@ -50,7 +50,20 @@ namespace :test do
             #     sh 'inspec exec spec/ansible_second_build_spec.rb'
             # end
         end
+        
+        namespace :python do
+            desc "unittest for ecr"
+            task :ecr do
+                sh 'python3 test_ecr.py'
+            end
+        end
 
+    end
+    namespace :integration do
+        desc "ecs test"
+            task :ecs do
+            sh 'inspec exec tests/ecs_spec.rb'
+        end
     end
 end
 
