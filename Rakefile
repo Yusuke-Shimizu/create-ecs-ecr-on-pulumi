@@ -81,7 +81,29 @@ namespace :ci do
     Rake::Task["build:pulumi"].invoke()
     Rake::Task["test:unit:awspec:spec"].invoke()
     Rake::Task["test:unit:inspec:stack"].invoke()
+    Rake::Task["spec:localhost"].invoke()
     Rake::Task["destroy:pulumi"].invoke()
   end
 end
 
+namespace :spec do
+  targets = []
+  Dir.glob('./serverspec/*').each do |dir|
+    next unless File.directory?(dir)
+    target = File.basename(dir)
+    target = "_#{target}" if target == "default"
+    targets << target
+  end
+
+  task :all     => targets
+  task :default => :all
+
+  targets.each do |target|
+    original_target = target == "_default" ? target[1..-1] : target
+    desc "Run serverspec tests to #{original_target}"
+    RSpec::Core::RakeTask.new(target.to_sym) do |t|
+      ENV['TARGET_HOST'] = original_target
+      t.pattern = "serverspec/#{original_target}/*_spec.rb"
+    end
+  end
+end

@@ -5,3 +5,4 @@ def create_repository(repo_name):
     # create repository
     repository = ecr.Repository(repo_name);
     pulumi.export('repository_name', repository.name)
+    pulumi.export('repository_url', repository.repository_url)

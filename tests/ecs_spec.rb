@@ -23,10 +23,6 @@ control 'login' do
 	
 end
 control 'pull' do
-	# pull image
-	# describe docker_image('hello-world:latest') do
-	# 	it { should_not exist }
-	# end
 	describe command("docker pull hello-world:latest") do
 		include_context 'check_command'
 	end
