@@ -6,6 +6,37 @@ RSpec.shared_context 'check_command' do
 	its('exit_status') { should eq 0 }
 end
 
+def check_preview(resources)
+	describe command("pulumi preview") do
+		include_context 'check_command'
+		resources.each{|resource_name|
+			its('stdout') { should match (/aws:#{resource_name}.*create/) }
+		}
+	end
+end
+
+def check_up(resources)
+	describe command("pulumi up --yes") do
+		include_context 'check_command'
+		resources.each{|resource_name|
+			its('stdout') { should match (/\+.*aws:#{resource_name}.*created/) }
+		}
+	end
+end
+
+def check_destroy(resources)
+	describe command("pulumi destroy --yes") do
+		include_context 'check_command'
+		resources.each{|resource_name|
+			its('stdout') { should match (/\-.*aws:#{resource_name}.*deleted/) }
+		}
+	end
+end
+
+resources = ["ecr:Repository", "ecs:Cluster"]
+check_preview(resources)
+check_up(resources)
+
 # TODO
 # docker image ls --quiet
 # のリストが前後で変わらないことをチェックする
@@ -25,6 +56,10 @@ describe docker_image(local_image_name) do
 	it { should exist }
 end
 
+describe command("sleep 60") do
+	include_context 'check_command'
+end
+
 # get repository info
 pulumi_stack = `pulumi stack output --json`
 pulumi_hash = JSON.parse(pulumi_stack)
@@ -40,12 +75,6 @@ end
 describe docker_image(ecr_image_name) do
 	it { should exist }
 end
-
-# docker tag hello-world:latest 889119567707.dkr.ecr.ap-northeast-1.amazonaws.com/my-repo-54cacda:latest
-# docker push 889119567707.dkr.ecr.ap-northeast-1.amazonaws.com/my-repo-54cacda:latest
-# docker push 889119567707.dkr.ecr.ap-northeast-1.amazonaws.com/my-repo-54cacda/my-repo-54cacda:latest
-# docker pull 889119567707.dkr.ecr.ap-northeast-1.amazonaws.com/my-repo-54cacda:latest
-
 
 # push image
 describe command("docker push #{ecr_image_name}") do
@@ -74,3 +103,5 @@ end
 describe docker_image(local_image_name) do
 	it { should_not exist }
 end
+
+check_destroy(resources)
